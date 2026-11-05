@@ -1,5 +1,5 @@
 const CACHE = 'jwt-inspector-v1';
-const ASSETS = ['./', './index.html', './app.js', './manifest.webmanifest', './sw.js', './_headers'];
+const ASSETS = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest', './sw.js', './_headers'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)));

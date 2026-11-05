@@ -1,44 +1,43 @@
-name: Deploy JWT Tool via Terraform
+name: Deploy JWT Inspector to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
 jobs:
-  terraform-deploy:
-    name: Run Terraform Apply
+  build:
+    name: Build Pages artifact
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: ./terraform
-
     steps:
-      - name: Checkout Code
+      - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Setup Terraform CLI
-        uses: hashicorp/setup-terraform@v3
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload website artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          terraform_version: 1.6.0
+          path: ./docs
 
-      - name: Check Formatting
-        run: terraform fmt -check
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Apply
-        env:
-          TF_VAR_github_token: ${{ secrets.GH_PAT }}
-          TF_VAR_github_owner: ${{ github.repository_owner }}
-          TF_VAR_repository_name: ${{ github.event.repository.name }}
-        run: terraform apply -auto-approve -input=false
-
-      - name: Print Live URL
-        run: |
-          echo "==================================================="
-          echo "TOOL URL: $(terraform output -raw live_decoder_url)"
-          echo "==================================================="
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy website
+        id: deployment
+        uses: actions/deploy-pages@v4
