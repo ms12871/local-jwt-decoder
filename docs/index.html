@@ -1,235 +1,83 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Local JWT & Claim Inspector</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="description" content="Decode, encode, validate, and verify JSON Web Tokens locally.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none';">
+  <link rel="manifest" href="manifest.webmanifest">
+  <title>Local JWT Inspector</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
-      background: #0f172a;
-      color: #e2e8f0;
-      min-height: 100vh;
-      padding: 2rem 1rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .container {
-      max-width: 900px;
-      width: 100%;
-    }
-    header {
-      margin-bottom: 1.5rem;
-      border-bottom: 1px solid #334155;
-      padding-bottom: 1rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-    }
-    h1 { font-size: 1.5rem; color: #38bdf8; }
-    .badge-sec {
-      background: #14532d;
-      color: #4ade80;
-      padding: 0.25rem 0.6rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      border: 1px solid #16a34a;
-    }
-    textarea {
-      width: 100%;
-      height: 130px;
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 0.5rem;
-      color: #f8fafc;
-      padding: 0.75rem;
-      font-family: monospace;
-      font-size: 0.85rem;
-      resize: vertical;
-      margin-bottom: 1rem;
-    }
-    textarea:focus { outline: 1px solid #38bdf8; }
-    .status-bar {
-      margin-bottom: 1.5rem;
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-      min-height: 32px;
-    }
-    .pill {
-      font-size: 0.8rem;
-      padding: 0.25rem 0.6rem;
-      border-radius: 0.375rem;
-      font-weight: 600;
-    }
-    .pill-active { background: #166534; color: #bbf7d0; }
-    .pill-expired { background: #991b1b; color: #fecaca; }
-    .pill-idle { background: #334155; color: #94a3b8; }
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-    }
-    @media (max-width: 768px) {
-      .grid { grid-template-columns: 1fr; }
-    }
-    .panel {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 0.5rem;
-      overflow: hidden;
-    }
-    .panel-header {
-      background: #0f172a;
-      padding: 0.5rem 0.75rem;
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: #94a3b8;
-      border-bottom: 1px solid #334155;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    pre {
-      padding: 1rem;
-      overflow-x: auto;
-      font-size: 0.82rem;
-      color: #38bdf8;
-      line-height: 1.4;
-      max-height: 400px;
-    }
-    .claims-detail {
-      margin-top: 1rem;
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 0.5rem;
-      padding: 1rem;
-    }
-    .claim-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.35rem 0;
-      border-bottom: 1px solid #334155;
-      font-size: 0.85rem;
-    }
-    .claim-key { color: #94a3b8; font-weight: 600; }
-    .claim-val { color: #f8fafc; word-break: break-all; margin-left: 1rem; text-align: right; }
+    :root { color-scheme: dark; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0f172a; color: #e2e8f0; }
+    * { box-sizing: border-box; } body { margin: 0; min-height: 100vh; padding: 2rem 1rem; background: radial-gradient(circle at top, #1e3a5f, #0f172a 55%); }
+    .container { max-width: 1000px; margin: auto; } header { display: flex; justify-content: space-between; gap: 1rem; align-items: end; border-bottom: 1px solid #334155; padding-bottom: 1rem; }
+    h1 { margin: 0; color: #38bdf8; font-size: 1.65rem; } h2 { color: #38bdf8; font-size: 1.05rem; } h3 { font-size: .9rem; color: #38bdf8; }
+    .muted, .notice { color: #94a3b8; font-size: .82rem; line-height: 1.5; } .badge { background: #14532d; color: #4ade80; padding: .25rem .6rem; border-radius: 999px; font-size: .75rem; white-space: nowrap; }
+    .tabs { display: flex; gap: .5rem; margin: 1.25rem 0; } .tab, button { border: 1px solid #0284c7; border-radius: .375rem; padding: .55rem .8rem; background: #164e63; color: #e0f2fe; cursor: pointer; font-weight: 650; }
+    .tab[aria-selected="true"], button.primary { background: #0369a1; } button.secondary { background: #334155; border-color: #475569; } button.danger { background: #7f1d1d; border-color: #991b1b; }
+    .tab-panel { display: none; } .tab-panel.active { display: block; } textarea, input, select { width: 100%; background: #1e293b; border: 1px solid #475569; border-radius: .375rem; color: #f8fafc; padding: .7rem; font: .85rem/1.45 monospace; }
+    textarea { min-height: 130px; resize: vertical; } input, select { font-family: inherit; } label { display: block; color: #cbd5e1; font-size: .8rem; font-weight: 650; margin: .75rem 0 .35rem; }
+    textarea:focus, input:focus, select:focus { outline: 2px solid #38bdf8; outline-offset: 1px; } .actions { display: flex; flex-wrap: wrap; gap: .5rem; margin: .75rem 0; }
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; } .panel, .claims, .verify { margin-top: 1rem; padding: 1rem; background: #1e293b; border: 1px solid #334155; border-radius: .5rem; }
+    .panel-header { color: #94a3b8; font-size: .78rem; font-weight: 700; text-transform: uppercase; margin-bottom: .5rem; } pre, .output { margin: 0; min-height: 4rem; overflow: auto; overflow-wrap: anywhere; color: #7dd3fc; font: .82rem/1.45 monospace; white-space: pre-wrap; }
+    .status { display: inline-block; margin: .75rem 0; padding: .3rem .6rem; border-radius: .375rem; font-size: .8rem; font-weight: 700; } .idle { background: #334155; color: #cbd5e1; } .ok { background: #166534; color: #bbf7d0; } .warn { background: #854d0e; color: #fef08a; } .bad { background: #991b1b; color: #fecaca; }
+    .claims { display: none; } .claim-row { display: flex; justify-content: space-between; gap: 1rem; padding: .4rem 0; border-bottom: 1px solid #334155; font-size: .83rem; } .claim-row:last-child { border: 0; }
+    .claim-key { color: #94a3b8; font-weight: 650; } .claim-val { text-align: right; overflow-wrap: anywhere; } .warning { margin: .5rem 0; padding: .6rem; border-left: 3px solid #f59e0b; background: #422006; color: #fde68a; font-size: .82rem; }
+    .success { margin: .5rem 0; padding: .6rem; border-left: 3px solid #22c55e; background: #052e16; color: #bbf7d0; font-size: .82rem; } footer { margin-top: 1.5rem; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1rem; } .toolbar button { font-size: .78rem; } .file-label { padding: .55rem .8rem; cursor: pointer; }
+    .advanced { margin-top: 1rem; padding: .75rem; border: 1px solid #334155; border-radius: .375rem; } .advanced summary { cursor: pointer; color: #7dd3fc; font-weight: 650; }
+    .history-list { display: grid; gap: .35rem; margin-top: .5rem; } .history-item { display: flex; justify-content: space-between; gap: .5rem; align-items: center; padding: .35rem .5rem; background: #0f172a; border-radius: .25rem; font: .75rem monospace; overflow-wrap: anywhere; }
+    .key-output { max-height: 120px; }
+    .light { color-scheme: light; background: #f8fafc; color: #172033; } .light body { background: #e2e8f0; } .light textarea, .light input, .light select, .light .panel, .light .claims, .light .verify, .light .tool-section { background: #fff; color: #172033; }
+    @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } header { align-items: start; flex-direction: column; } }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div>
-        <h1>Local JWT Decoder</h1>
-        <p style="font-size: 0.8rem; color: #94a3b8; margin-top: 0.25rem;">Client-side inspection | Zero external network calls</p>
-      </div>
-      <span class="badge-sec">Browser Sandboxed</span>
-    </header>
+  <main class="container">
+    <header><div><h1>Local JWT Inspector</h1><p class="muted">Decode, encode, validate, and verify tokens without uploading them.</p></div><span class="badge">Browser-only</span></header>
+    <div class="toolbar" aria-label="App options"><button id="theme-button" class="secondary">Use light theme</button><button id="install-button" class="secondary" hidden>Install app</button><label for="token-file" class="secondary file-label">Import token file</label><input id="token-file" type="file" accept=".jwt,.txt,.json" hidden></div>
+    <nav class="tabs" role="tablist" aria-label="JWT tools">
+      <button class="tab" role="tab" aria-selected="true" aria-controls="decode-panel" data-tab="decode-panel">Decoder</button>
+      <button class="tab" role="tab" aria-selected="false" aria-controls="encode-panel" data-tab="encode-panel">Encoder</button>
+      <button class="tab" role="tab" aria-selected="false" aria-controls="verify-panel" data-tab="verify-panel">Verify signature</button>
+    </nav>
 
-    <textarea id="token-input" placeholder="Paste encoded JSON Web Token (eyJhbGciOi...) here..."></textarea>
+    <section id="decode-panel" class="tab-panel active" role="tabpanel">
+      <label for="token-input">JWT token</label><textarea id="token-input" placeholder="header.payload.signature"></textarea>
+      <div class="actions"><button id="decode-button" class="primary">Decode token</button><button id="sample-button" class="secondary">Load example</button><button id="clear-button" class="secondary">Clear</button><button id="download-report-button" class="secondary">Download report</button></div>
+      <details class="advanced"><summary>Claim validation options</summary><div class="grid"><div><label for="expected-issuer">Expected issuer (iss)</label><input id="expected-issuer" placeholder="Optional"></div><div><label for="expected-audience">Expected audience (aud)</label><input id="expected-audience" placeholder="Optional"></div></div><label for="clock-skew">Clock skew tolerance (seconds)</label><input id="clock-skew" type="number" min="0" max="3600" value="60"><p class="muted">Affects exp and nbf checks only.</p></details>
+      <div id="decode-status" class="status idle">Awaiting token</div><div id="decode-warnings"></div>
+      <div class="grid"><article class="panel"><div class="panel-header">Header <button class="secondary copy-button" data-copy="header-output">Copy JSON</button></div><pre id="header-output">// Header</pre></article><article class="panel"><div class="panel-header">Payload <button class="secondary copy-button" data-copy="payload-output">Copy JSON</button></div><pre id="payload-output">// Payload</pre></article></div>
+      <section id="claims" class="claims"><h3>Claim details</h3><div id="claims-content"></div></section>
+    </section>
 
-    <div class="status-bar">
-      <span id="expiry-badge" class="pill pill-idle">Awaiting Token</span>
-      <span id="expiry-time" style="font-size: 0.85rem; color: #94a3b8;"></span>
-    </div>
+    <section id="encode-panel" class="tab-panel" role="tabpanel">
+      <p class="notice">HS256 creates a signed token in this browser. The other algorithms require a private key for signing. <strong>Never share secrets or private keys.</strong></p>
+      <label for="encode-algorithm">Algorithm</label><select id="encode-algorithm"><option value="none">none (unsigned)</option><option value="HS256">HS256 (HMAC)</option><option value="RS256">RS256</option><option value="ES256">ES256</option></select>
+      <label for="encode-header">Header JSON</label><textarea id="encode-header">{
+  "typ": "JWT"
+}</textarea>
+      <label for="encode-payload">Payload JSON</label><textarea id="encode-payload">{
+  "sub": "1234567890",
+  "name": "Jane Doe",
+  "iat": 1516239022
+}</textarea>
+      <div id="encode-key-wrap"><label for="encode-key">HS256 secret or generated private key</label><textarea id="encode-key" autocomplete="off" placeholder="Enter an HS256 secret, or generate an RSA/ECDSA key"></textarea></div>
+      <div class="actions"><button id="encode-button" class="primary">Encode token</button><button class="secondary copy-button" data-copy="encoded-output">Copy token</button><button id="download-token-button" class="secondary">Download token</button></div><div id="encoded-output" class="output">Encoded token will appear here.</div><div id="encode-message"></div>
+      <div class="actions"><button id="generate-key-button" class="secondary">Generate signing key</button><button id="export-key-button" class="secondary">Export public key</button></div><pre id="generated-key-output" class="output key-output">No generated key.</pre>
+    </section>
 
-    <div class="grid">
-      <div class="panel">
-        <div class="panel-header">Header</div>
-        <pre id="header-output">// Decoded JOSE Header</pre>
-      </div>
-      <div class="panel">
-        <div class="panel-header">Payload</div>
-        <pre id="payload-output">// Decoded Claims Payload</pre>
-      </div>
-    </div>
+    <section id="verify-panel" class="tab-panel" role="tabpanel">
+      <p class="notice">Verification is local. HS256 uses a secret; RS256 and ES256 use a PEM-encoded public key.</p>
+      <label for="verify-token">JWT token</label><textarea id="verify-token" placeholder="Paste a signed JWT"></textarea>
+      <label for="verify-key">Secret or public key</label><textarea id="verify-key" placeholder="HS256 secret or PEM public key"></textarea>
+      <div class="actions"><button id="verify-button" class="primary">Verify signature</button><button class="secondary copy-button" data-copy="verify-token">Copy token</button></div><div id="verify-result" class="status idle">Awaiting verification</div><div id="verify-message"></div>
+      <details class="advanced"><summary>Saved token history (opt-in)</summary><div class="actions"><button id="save-history-button" class="secondary">Save current token</button><button id="clear-history-button" class="danger">Clear history</button></div><div id="history-list" class="history-list"></div><p class="muted">History is stored only in this browser. Do not save sensitive production tokens.</p></details>
+    </section>
+    <footer class="notice">JWTs are decoded, not trusted, until signature and claim validation succeed. No token data is stored or transmitted.</footer>
+  </main>
 
-    <div class="claims-detail" id="parsed-details" style="display: none;">
-      <h3 style="font-size: 0.9rem; color: #38bdf8; margin-bottom: 0.5rem;">Key IAM Claims</h3>
-      <div class="claim-row"><span class="claim-key">Subject (sub):</span><span class="claim-val" id="claim-sub">-</span></div>
-      <div class="claim-row"><span class="claim-key">Issuer (iss):</span><span class="claim-val" id="claim-iss">-</span></div>
-      <div class="claim-row"><span class="claim-key">Audience (aud):</span><span class="claim-val" id="claim-aud">-</span></div>
-      <div class="claim-row"><span class="claim-key">Issued At (iat):</span><span class="claim-val" id="claim-iat">-</span></div>
-      <div class="claim-row" style="border-bottom: none;"><span class="claim-key">Expiration (exp):</span><span class="claim-val" id="claim-exp">-</span></div>
-    </div>
-  </div>
-
-  <script>
-    function parseBase64Url(str) {
-      let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
-      while (base64.length % 4) { base64 += '='; }
-      return decodeURIComponent(atob(base64).split('').map(c => {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-    }
-
-    const input = document.getElementById('token-input');
-    const headerOut = document.getElementById('header-output');
-    const payloadOut = document.getElementById('payload-output');
-    const badge = document.getElementById('expiry-badge');
-    const expText = document.getElementById('expiry-time');
-    const details = document.getElementById('parsed-details');
-
-    input.addEventListener('input', () => {
-      const raw = input.value.trim();
-      if (!raw) {
-        headerOut.textContent = '// Decoded JOSE Header';
-        payloadOut.textContent = '// Decoded Claims Payload';
-        badge.className = 'pill pill-idle';
-        badge.textContent = 'Awaiting Token';
-        expText.textContent = '';
-        details.style.display = 'none';
-        return;
-      }
-
-      const parts = raw.split('.');
-      if (parts.length < 2) {
-        badge.className = 'pill pill-expired';
-        badge.textContent = 'Malformed JWT';
-        expText.textContent = 'Expected period-separated segments';
-        details.style.display = 'none';
-        return;
-      }
-
-      try {
-        const header = JSON.parse(parseBase64Url(parts[0]));
-        const payload = JSON.parse(parseBase64Url(parts[1]));
-
-        headerOut.textContent = JSON.stringify(header, null, 2);
-        payloadOut.textContent = JSON.stringify(payload, null, 2);
-        details.style.display = 'block';
-
-        document.getElementById('claim-sub').textContent = payload.sub || 'N/A';
-        document.getElementById('claim-iss').textContent = payload.iss || 'N/A';
-        document.getElementById('claim-aud').textContent = payload.aud || 'N/A';
-        document.getElementById('claim-iat').textContent = payload.iat ? new Date(payload.iat * 1000).toLocaleString() : 'N/A';
-        document.getElementById('claim-exp').textContent = payload.exp ? new Date(payload.exp * 1000).toLocaleString() : 'N/A';
-
-        if (payload.exp) {
-          const now = Math.floor(Date.now() / 1000);
-          if (now > payload.exp) {
-            badge.className = 'pill pill-expired';
-            badge.textContent = 'Expired';
-            expText.textContent = `Expired on ${new Date(payload.exp * 1000).toLocaleTimeString()}`;
-          } else {
-            badge.className = 'pill pill-active';
-            badge.textContent = 'Active (Valid)';
-            const diffMin = Math.round((payload.exp - now) / 60);
-            expText.textContent = `Expires in ~${diffMin} minute(s)`;
-          }
-        } else {
-          badge.className = 'pill pill-idle';
-          badge.textContent = 'No Expiration Claim';
-          expText.textContent = '';
-        }
-      } catch (err) {
-        badge.className = 'pill pill-expired';
-        badge.textContent = 'Parse Error';
-        expText.textContent = err.message;
-        details.style.display = 'none';
-      }
-    });
-  </script>
+  <script src="app.js" defer></script>
 </body>
 </html>

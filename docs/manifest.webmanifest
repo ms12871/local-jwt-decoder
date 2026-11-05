@@ -1,0 +1,9 @@
+{
+  "name": "Local JWT Inspector",
+  "short_name": "JWT Inspector",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "description": "Decode, encode, validate, and verify JWTs locally."
+}

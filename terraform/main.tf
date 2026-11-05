@@ -13,7 +13,7 @@ provider "github" {
   owner = var.github_owner
 }
 
-# Configures GitHub Pages to serve from the /site directory on main
+# Configures GitHub Pages to serve the static application from /docs on main.
 resource "github_repository_pages" "decoder_pages" {
   repository = var.repository_name
 
