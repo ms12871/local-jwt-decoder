@@ -19,6 +19,6 @@ resource "github_repository_pages" "decoder_pages" {
 
   source {
     branch = "main"
-    path   = "/site"
+    path   = "/docs"
   }
 }
